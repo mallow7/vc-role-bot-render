@@ -9,6 +9,6 @@
     "discord.js": "^14.0.0"
   },
   "engines": {
-    "node": "16.x"
+    "node": "18.x"
   }
 }
