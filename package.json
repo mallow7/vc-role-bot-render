@@ -1,7 +1,7 @@
 {
   "name": "vc-role-bot",
   "version": "1.0.0",
-  "main": "vc-role-bot.js",  // This points to the file in the root
+  "main": "vc-role-bot.js", 
   "scripts": {
     "start": "node vc-role-bot.js"
   },
