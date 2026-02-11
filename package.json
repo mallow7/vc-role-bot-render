@@ -1,11 +1,14 @@
 {
   "name": "vc-role-bot",
   "version": "1.0.0",
-  "main": "vc-role-bot.js",
+  "main": "vc-role-bot.js",  // This points to the file in the root
   "scripts": {
     "start": "node vc-role-bot.js"
   },
   "dependencies": {
     "discord.js": "^14.0.0"
+  },
+  "engines": {
+    "node": "16.x"
   }
 }
