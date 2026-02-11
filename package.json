@@ -1,0 +1,11 @@
+{
+  "name": "vc-role-bot",
+  "version": "1.0.0",
+  "main": "vc-role-bot.js",
+  "scripts": {
+    "start": "node vc-role-bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.0.0"
+  }
+}
