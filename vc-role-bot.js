@@ -23,7 +23,7 @@ client.on('messageCreate', message => {
     }, 10 * 60 * 1000);  // 10 minutes in milliseconds
 
     activeRequests.set(message.guild.id, timeout);
-    message.reply('VC request submitted. Staff have been notified. Auto-deny in 10 minutes if not approved.');
+    message.reply('VC request submitted. Auto-deny in 10 minutes if not approved.');
   }
 
   if (message.content === '!approvevc') {
