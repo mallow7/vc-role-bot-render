@@ -1,10 +1,24 @@
 const { Client, Intents } = require('discord.js');
+const express = require('express');  // Add Express for the web server
+const app = express();  // Create Express app
+const port = process.env.PORT || 10000;  // Use Render's PORT or default to 10000
+
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS] });
 
 const activeRequests = new Map();
 
 client.on('ready', () => {
   console.log('VC Role Bot is online!');
+});
+
+// Start the web server
+app.listen(port, () => {
+  console.log(`Web server is running on port ${port}`);
+});
+
+// Optional: Add a simple route (e.g., for health checks)
+app.get('/', (req, res) => {
+  res.send('VC Role Bot is running!');
 });
 
 client.on('messageCreate', message => {
@@ -14,7 +28,7 @@ client.on('messageCreate', message => {
   // Check if the message is from a bot and contains "!requestvc"
   if (message.author.bot && message.content.includes('!requestvc')) {
     // Optional: Restrict to a trusted bot (e.g., YAGPDB) and channel
-    if (message.author.id === '204255221017214977' && message.channel.name === 'vc-requests') {  // Replace 'TRUSTED_BOT_ID' with the actual bot ID
+    if (message.author.id === '204255221017214977' && message.channel.name === 'vc-requests') {  // YAGPDB's ID
       // Execute the VC request logic (same as manual !requestvc)
       if (activeRequests.has(message.guild.id)) {
         message.reply('There is already an active VC request. Wait for approval or denial.');
