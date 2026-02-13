@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "discord.js": "^13.0.0",
-    "express": "^4.18.0"  // Add this for the web server
+    "express": "^4.18.0"
   },
   "engines": {
     "node": "16.x"
