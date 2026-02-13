@@ -1,4 +1,7 @@
 const { Client, Intents } = require('discord.js');
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 10000;
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS] });
 
@@ -8,6 +11,34 @@ client.on('ready', () => {
   console.log('VC Role Bot is online!');
 });
 
+app.listen(port, () => {
+  console.log(`Web server is running on port ${port}`);
+});
+
+// Basic website routes
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head><title>VC Role Bot</title></head>
+      <body>
+        <h1>VC Role Bot is Running!</h1>
+        <p>Status: ${client.user ? 'Online' : 'Offline'}</p>
+        <p>Use !requestvc in Discord to request VC access.</p>
+        <p>Last updated: ${new Date().toLocaleString()}</p>
+      </body>
+    </html>
+  `);
+});
+
+app.get('/status', (req, res) => {
+  res.json({
+    botOnline: client.user ? true : false,
+    activeRequests: activeRequests.size,
+    uptime: process.uptime()
+  });
+});
+
+// Your existing Discord bot logic here
 client.on('messageCreate', message => {
   if (message.author.id === client.user.id) return;
 
