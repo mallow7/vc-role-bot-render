@@ -9,7 +9,7 @@ const activeRequests = new Map();
 const vcApproved = new Map();
 const activeCommands = new Set();
 const processedMessages = new Set();
-const lastMessageTime = new Map();  // In-memory only for now
+const lastMessageTime = new Map();
 
 console.log('[STARTUP] Initializing VC Role Bot...');
 
@@ -49,7 +49,7 @@ client.on('messageCreate', message => {
   }
   processedMessages.add(message.id);
 
-  // Bot listener for YAGPDB's request message
+  // Bot listener for YAGPDB's request message (restricted to original channel)
   if (message.author.bot && message.author.id === '204255221017214977' && message.channel.id === '769855036876128257' && message.content.includes('has requested a moderated voice channel session')) {
     console.log('[DEBUG] YAGPDB request message detected');
     if (activeRequests.has(message.guild.id)) {
@@ -63,9 +63,10 @@ client.on('messageCreate', message => {
     message.reply('VC request submitted. Auto-deny in 10 minutes if not approved.');
   }
 
-  // Restrict user commands to the commands channel
-  if (message.channel.id !== '769855036876128257') {
-    console.log(`[DEBUG] Message not in commands channel, ignoring`);
+  // Allow user commands in the two specified channels
+  const allowedChannels = ['769855036876128257', '1471682252537860213'];
+  if (!allowedChannels.includes(message.channel.id)) {
+    console.log(`[DEBUG] Message not in allowed command channels, ignoring`);
     return;
   }
 
