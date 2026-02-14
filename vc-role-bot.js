@@ -36,7 +36,6 @@ client.on('messageCreate', message => {
   // Bot listener for YAGPDB's request message
   if (message.author.bot && message.author.id === '204255221017214977' && message.channel.id === '769855036876128257' && message.content.includes('has requested a moderated voice channel session')) {
     if (activeRequests.has(message.guild.id)) {
-      // Already active, no need to reply or start again
       return;
     }
     const timeout = setTimeout(() => {
@@ -47,7 +46,7 @@ client.on('messageCreate', message => {
     message.reply('VC request submitted. Auto-deny in 10 minutes if not approved.');
   }
 
-  // User command for !requestvc (starts timer but doesn't reply)
+  // User command for !requestvc
   if (message.content === '!requestvc') {
     if (activeRequests.has(message.guild.id)) {
       message.reply('You already have an active VC request. Wait for approval or denial.');
@@ -58,11 +57,14 @@ client.on('messageCreate', message => {
       activeRequests.delete(message.guild.id);
     }, 10 * 60 * 1000);
     activeRequests.set(message.guild.id, timeout);
-    // No reply here – the bot listener handles it
   }
 
   if (message.content === '!approvevc') {
     if (message.member.roles.cache.has('769628526701314108') || message.member.roles.cache.has('1437634924386451586')) {
+      if (vcApproved.get(message.guild.id)) {
+        message.reply('VC is already approved.');
+        return;
+      }
       if (activeRequests.has(message.guild.id)) {
         clearTimeout(activeRequests.get(message.guild.id));
         activeRequests.delete(message.guild.id);
