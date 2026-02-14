@@ -8,7 +8,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent // Added for message content intent in v14
+    GatewayIntentBits.MessageContent,  // Added for message content intent in v14
+    GatewayIntentBits.GuildVoiceStates  // Added for voice disconnect
   ]
 });
 
@@ -60,6 +61,12 @@ client.on('messageCreate', message => {
     message.reply('VC request submitted. Auto-deny in 10 minutes if not approved.');
   }
 
+  // Allow user commands in the two specified channels
+  const allowedChannels = ['769855036876128257', '1471682252537860213'];
+  if (!allowedChannels.includes(message.channel.id)) {
+    return;
+  }
+
   // User command for !requestvc
   if (message.content === '!requestvc') {
     if (activeRequests.has(message.guild.id)) {
@@ -90,7 +97,7 @@ client.on('messageCreate', message => {
       const lastTimeKey = `approve-${message.guild.id}`;
       const now = Date.now();
       const lastTime = lastMessageTime.get(lastTimeKey) || 0;
-      if (now - lastTime < 5000) {
+      if (now - lastTime < 3000) {  // 3 seconds cooldown
         activeCommands.delete(commandKey);
         message.reply('Approval message sent recently. Please wait.');
         return;
@@ -142,7 +149,7 @@ client.on('messageCreate', message => {
       const lastTimeKey = `lock-${message.guild.id}`;
       const now = Date.now();
       const lastTime = lastMessageTime.get(lastTimeKey) || 0;
-      if (now - lastTime < 5000) {
+      if (now - lastTime < 3000) {  // 3 seconds cooldown
         activeCommands.delete(commandKey);
         message.reply('Lock message sent recently. Please wait.');
         return;
@@ -153,11 +160,14 @@ client.on('messageCreate', message => {
       }
       vcApproved.set(message.guild.id, false);
       const role = message.guild.roles.cache.get('1471376746027941960');
-      const vcChannel = message.guild.channels.cache.get('769855238562643968');  // Replace with your VC channel ID
+      const vcChannel = message.guild.channels.cache.get('769855238562643968');  // VC channel ID
       if (role) {
         message.guild.members.cache.forEach(member => {
           console.log(`Checking member ${member.user.tag} (ID: ${member.id})`);
-          if (!member.roles.cache.has('769628526701314108') && !member.roles.cache.has('1437634924386451586')) {
+          const isStaff = member.roles.cache.has('769628526701314108');
+          const isMod = member.roles.cache.has('1437634924386451586');
+          const isBot = member.id === '1470584024882872430';
+          if (!isStaff && !isMod && !isBot) {
             console.log(`Removing role from ${member.user.tag}`);
             member.roles.remove(role).catch(err => console.error(`Failed to remove role from ${member.user.tag}: ${err}`));
             // Disconnect from VC if in the channel
@@ -166,7 +176,7 @@ client.on('messageCreate', message => {
               member.voice.disconnect().catch(err => console.error(`Failed to disconnect ${member.user.tag}: ${err}`));
             }
           } else {
-            console.log(`${member.user.tag} is staff/mod, skipping.`);
+            console.log(`${member.user.tag} is staff/mod/bot, skipping.`);
           }
         });
         lastMessageTime.set(lastTimeKey, now);
