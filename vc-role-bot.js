@@ -34,10 +34,14 @@ app.get('/', (req, res) => {
 });
 
 client.on('messageCreate', message => {
+  console.log(`Processing message ID: ${message.id}, Content: ${message.content}`);  // Debug log for double messages
   if (message.author.id === client.user.id) return;
 
   // Check if message has already been processed
-  if (processedMessages.has(message.id)) return;
+  if (processedMessages.has(message.id)) {
+    console.log(`Message ${message.id} already processed, skipping.`);
+    return;
+  }
   processedMessages.add(message.id);
 
   // Bot listener for YAGPDB's request message
@@ -67,6 +71,7 @@ client.on('messageCreate', message => {
   }
 
   if (message.content === '!approvevc') {
+    console.log(`!approvevc triggered for message ${message.id}`);
     if (message.member.roles.cache.has('769628526701314108') || message.member.roles.cache.has('1437634924386451586')) {
       const commandKey = `approve-${message.guild.id}`;
       if (activeCommands.has(commandKey)) {
@@ -83,7 +88,7 @@ client.on('messageCreate', message => {
       const lastTimeKey = `approve-${message.guild.id}`;
       const now = Date.now();
       const lastTime = lastMessageTime.get(lastTimeKey) || 0;
-      if (now - lastTime < 5000) {
+      if (now - lastTime < 30000) {  // Increased to 30 seconds cooldown
         activeCommands.delete(commandKey);
         message.reply('Approval message sent recently. Please wait.');
         return;
@@ -124,6 +129,7 @@ client.on('messageCreate', message => {
   }
 
   if (message.content === '!lockvc') {
+    console.log(`!lockvc triggered for message ${message.id}`);
     if (message.member.roles.cache.has('769628526701314108') || message.member.roles.cache.has('1437634924386451586')) {
       const commandKey = `lock-${message.guild.id}`;
       if (activeCommands.has(commandKey)) {
@@ -135,7 +141,7 @@ client.on('messageCreate', message => {
       const lastTimeKey = `lock-${message.guild.id}`;
       const now = Date.now();
       const lastTime = lastMessageTime.get(lastTimeKey) || 0;
-      if (now - lastTime < 5000) {
+      if (now - lastTime < 30000) {  // Increased to 30 seconds cooldown
         activeCommands.delete(commandKey);
         message.reply('Lock message sent recently. Please wait.');
         return;
@@ -150,7 +156,11 @@ client.on('messageCreate', message => {
       if (role) {
         message.guild.members.cache.forEach(member => {
           console.log(`Checking member ${member.user.tag} (ID: ${member.id})`);
-          if (!member.roles.cache.has('769628526701314108') && !member.roles.cache.has('1437634924386451586')) {
+          const isStaff = member.roles.cache.has('769628526701314108');
+          const isMod = member.roles.cache.has('1437634924386451586');
+          const isBot = member.id === '1470584024882872430';
+          console.log(`isStaff: ${isStaff}, isMod: ${isMod}, isBot: ${isBot}, member.id: ${member.id}`);
+          if (!isStaff && !isMod && !isBot) {
             console.log(`Removing role from ${member.user.tag}`);
             member.roles.remove(role).catch(err => console.error(`Failed to remove role from ${member.user.tag}: ${err}`));
             // Disconnect from VC if in the channel
@@ -159,7 +169,7 @@ client.on('messageCreate', message => {
               member.voice.disconnect().catch(err => console.error(`Failed to disconnect ${member.user.tag}: ${err}`));
             }
           } else {
-            console.log(`${member.user.tag} is staff/mod, skipping.`);
+            console.log(`${member.user.tag} is staff/mod/bot, skipping.`);
           }
         });
         lastMessageTime.set(lastTimeKey, now);
