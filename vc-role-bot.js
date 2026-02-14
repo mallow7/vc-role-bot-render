@@ -33,21 +33,21 @@ app.get('/', (req, res) => {
 client.on('messageCreate', message => {
   if (message.author.id === client.user.id) return;
 
-  if (message.author.bot && message.content.includes('!requestvc')) {
-    if (message.author.id === '204255221017214977' && message.channel.id === '769855036876128257') {
-      if (activeRequests.has(message.guild.id)) {
-        // Already active, no need to reply or start again
-        return;
-      }
-      const timeout = setTimeout(() => {
-        message.channel.send(`${message.author}, your VC request has been automatically denied due to no staff response in 10 minutes.`);
-        activeRequests.delete(message.guild.id);
-      }, 10 * 60 * 1000);
-      activeRequests.set(message.guild.id, timeout);
-      // No reply here to avoid duplication
+  // Bot listener for YAGPDB's request message
+  if (message.author.bot && message.author.id === '204255221017214977' && message.channel.id === '769855036876128257' && message.content.includes('has requested a moderated voice channel session')) {
+    if (activeRequests.has(message.guild.id)) {
+      // Already active, no need to reply or start again
+      return;
     }
+    const timeout = setTimeout(() => {
+      message.channel.send(`${message.author}, your VC request has been automatically denied due to no staff response in 10 minutes.`);
+      activeRequests.delete(message.guild.id);
+    }, 10 * 60 * 1000);
+    activeRequests.set(message.guild.id, timeout);
+    message.reply('VC request submitted. Auto-deny in 10 minutes if not approved.');
   }
 
+  // User command for !requestvc (starts timer but doesn't reply)
   if (message.content === '!requestvc') {
     if (activeRequests.has(message.guild.id)) {
       message.reply('You already have an active VC request. Wait for approval or denial.');
@@ -58,7 +58,7 @@ client.on('messageCreate', message => {
       activeRequests.delete(message.guild.id);
     }, 10 * 60 * 1000);
     activeRequests.set(message.guild.id, timeout);
-    message.reply('VC request submitted. Auto-deny in 10 minutes if not approved.');
+    // No reply here – the bot listener handles it
   }
 
   if (message.content === '!approvevc') {
