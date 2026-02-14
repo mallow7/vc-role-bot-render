@@ -9,7 +9,7 @@ const activeRequests = new Map();
 const vcApproved = new Map();
 const activeCommands = new Set();
 const processedMessages = new Set();
-const lastMessageTime = new Map();  // Track last channel message time per command per guild
+const lastMessageTime = new Map();
 
 client.on('ready', () => {
   console.log('VC Role Bot is online!');
@@ -83,7 +83,7 @@ client.on('messageCreate', message => {
       const lastTimeKey = `approve-${message.guild.id}`;
       const now = Date.now();
       const lastTime = lastMessageTime.get(lastTimeKey) || 0;
-      if (now - lastTime < 5000) {  // 5 seconds cooldown for channel message
+      if (now - lastTime < 5000) {
         activeCommands.delete(commandKey);
         message.reply('Approval message sent recently. Please wait.');
         return;
@@ -135,7 +135,7 @@ client.on('messageCreate', message => {
       const lastTimeKey = `lock-${message.guild.id}`;
       const now = Date.now();
       const lastTime = lastMessageTime.get(lastTimeKey) || 0;
-      if (now - lastTime < 5000) {  // 5 seconds cooldown for channel message
+      if (now - lastTime < 5000) {
         activeCommands.delete(commandKey);
         message.reply('Lock message sent recently. Please wait.');
         return;
@@ -146,12 +146,18 @@ client.on('messageCreate', message => {
       }
       vcApproved.set(message.guild.id, false);
       const role = message.guild.roles.cache.get('1471376746027941960');
+      const vcChannel = message.guild.channels.cache.get('769855238562643968');  // Replace with your VC channel ID
       if (role) {
         message.guild.members.cache.forEach(member => {
           console.log(`Checking member ${member.user.tag} (ID: ${member.id})`);
           if (!member.roles.cache.has('769628526701314108') && !member.roles.cache.has('1437634924386451586')) {
             console.log(`Removing role from ${member.user.tag}`);
             member.roles.remove(role).catch(err => console.error(`Failed to remove role from ${member.user.tag}: ${err}`));
+            // Disconnect from VC if in the channel
+            if (vcChannel && member.voice.channelId === vcChannel.id) {
+              console.log(`Disconnecting ${member.user.tag} from VC`);
+              member.voice.disconnect().catch(err => console.error(`Failed to disconnect ${member.user.tag}: ${err}`));
+            }
           } else {
             console.log(`${member.user.tag} is staff/mod, skipping.`);
           }
