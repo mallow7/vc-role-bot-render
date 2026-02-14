@@ -61,7 +61,8 @@ client.on('messageCreate', message => {
 
   if (message.content === '!approvevc') {
     if (message.member.roles.cache.has('769628526701314108') || message.member.roles.cache.has('1437634924386451586')) {
-      if (vcApproved.get(message.guild.id)) {
+      const isApproved = vcApproved.get(message.guild.id);
+      if (isApproved === true) {
         message.reply('VC is already approved.');
         return;
       }
