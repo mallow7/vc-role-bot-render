@@ -8,6 +8,7 @@ const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_
 const activeRequests = new Map();
 const vcApproved = new Map();
 const activeCommands = new Set();
+const processedMessages = new Set();  // Track processed message IDs to prevent duplicates
 
 client.on('ready', () => {
   console.log('VC Role Bot is online!');
@@ -33,6 +34,10 @@ app.get('/', (req, res) => {
 
 client.on('messageCreate', message => {
   if (message.author.id === client.user.id) return;
+
+  // Check if message has already been processed
+  if (processedMessages.has(message.id)) return;
+  processedMessages.add(message.id);
 
   // Bot listener for YAGPDB's request message
   if (message.author.bot && message.author.id === '204255221017214977' && message.channel.id === '769855036876128257' && message.content.includes('has requested a moderated voice channel session')) {
