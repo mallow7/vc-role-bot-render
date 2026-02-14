@@ -8,7 +8,8 @@ const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_
 const activeRequests = new Map();
 const vcApproved = new Map();
 const activeCommands = new Set();
-const processedMessages = new Set();  // Track processed message IDs to prevent duplicates
+const processedMessages = new Set();
+const lastMessageTime = new Map();  // Track last channel message time per command per guild
 
 client.on('ready', () => {
   console.log('VC Role Bot is online!');
@@ -79,11 +80,20 @@ client.on('messageCreate', message => {
         message.reply('VC is already approved.');
         return;
       }
+      const lastTimeKey = `approve-${message.guild.id}`;
+      const now = Date.now();
+      const lastTime = lastMessageTime.get(lastTimeKey) || 0;
+      if (now - lastTime < 5000) {  // 5 seconds cooldown for channel message
+        activeCommands.delete(commandKey);
+        message.reply('Approval message sent recently. Please wait.');
+        return;
+      }
       if (activeRequests.has(message.guild.id)) {
         clearTimeout(activeRequests.get(message.guild.id));
         activeRequests.delete(message.guild.id);
       }
       vcApproved.set(message.guild.id, true);
+      lastMessageTime.set(lastTimeKey, now);
       message.channel.send('VC session approved—users can now use !joinvc to join #VC 1.');
       setTimeout(() => activeCommands.delete(commandKey), 1000);
     } else {
@@ -122,6 +132,14 @@ client.on('messageCreate', message => {
       }
       activeCommands.add(commandKey);
       console.log(`Locking VC for guild ${message.guild.id}. Total members: ${message.guild.members.cache.size}`);
+      const lastTimeKey = `lock-${message.guild.id}`;
+      const now = Date.now();
+      const lastTime = lastMessageTime.get(lastTimeKey) || 0;
+      if (now - lastTime < 5000) {  // 5 seconds cooldown for channel message
+        activeCommands.delete(commandKey);
+        message.reply('Lock message sent recently. Please wait.');
+        return;
+      }
       if (activeRequests.has(message.guild.id)) {
         clearTimeout(activeRequests.get(message.guild.id));
         activeRequests.delete(message.guild.id);
@@ -138,6 +156,7 @@ client.on('messageCreate', message => {
             console.log(`${member.user.tag} is staff/mod, skipping.`);
           }
         });
+        lastMessageTime.set(lastTimeKey, now);
         message.channel.send('VC session locked—#VC 1 is now closed. Only staff and mods can join.');
         setTimeout(() => activeCommands.delete(commandKey), 1000);
       } else {
