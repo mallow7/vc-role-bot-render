@@ -79,8 +79,9 @@ client.on('messageCreate', async (message) => {
     if (processedMessages.has(message.id)) return;
     processedMessages.add(message.id);
 
-    const allowedChannels = ['769855036876128257', '1471682252537860213'];
-    if (!allowedChannels.includes(message.channel.id)) return;
+    // Removed channel restrictions - commands now work in any channel in the guild
+    // const allowedChannels = ['769855036876128257', '1471682252537860213'];
+    // if (!allowedChannels.includes(message.channel.id)) return;
 
     const member = message.member;
 
