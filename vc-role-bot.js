@@ -32,6 +32,7 @@ client.once('clientReady', () => {  // Fixed: Use 'clientReady' to avoid depreca
   botOnline = true;
   console.log('✅ VC Role Bot is online!');
   console.log(`🤖 Logged in as ${client.user.tag}`);
+  console.log(`📊 In ${client.guilds.cache.size} servers`);  // Debug: Shows if bot is in servers
 });
 
 // Error handlers
@@ -65,16 +66,24 @@ app.get('/', (req, res) => {
 // Discord message handling
 client.on('messageCreate', async (message) => {
   try {
-    console.log(`Processing message: ${message.content} in ${message.channel.id} from ${message.author.tag}`);  // Debug log: Shows every message received
-    if (!message.guild || message.author.bot) return;
-    if (processedMessages.has(message.id)) return;
+    console.log(`🔍 Raw message received: ${message.content} in ${message.channel.id} from ${message.author.tag} (guild: ${message.guild ? message.guild.name : 'DM'})`);  // Extra debug: Logs all messages, even DMs
+    if (!message.guild || message.author.bot) {
+      console.log('❌ Skipping: Not in guild or from bot');  // Debug: Why skipped
+      return;
+    }
+    if (processedMessages.has(message.id)) {
+      console.log('❌ Skipping: Message already processed');  // Debug: Duplicate check
+      return;
+    }
     processedMessages.add(message.id);
 
     const allowedChannels = ['769855036876128257', '1471682252537860213'];
     if (!allowedChannels.includes(message.channel.id)) {
-      console.log('Message not in allowed channel');  // Debug log: If channel is wrong
+      console.log('❌ Skipping: Not in allowed channel');  // Debug: Channel check
       return;
     }
+
+    console.log(`✅ Processing command: ${message.content}`);  // Debug: Command processing starts
 
     // !requestvc
     if (message.content === '!requestvc') {
