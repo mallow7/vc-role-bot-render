@@ -21,13 +21,14 @@ const client = new Client({
 const activeRequests = new Map();
 const vcApproved = new Map();
 const processedMessages = new Set();
+const lastMessageTime = new Map(); // For cooldowns
 let botOnline = false;
 
 // Clear processed messages every hour
 setInterval(() => processedMessages.clear(), 60 * 60 * 1000);
 
 // Bot ready
-client.once('ready', () => {
+client.once('clientReady', () => {  // Fixed: Use 'clientReady' to avoid deprecation warning
   botOnline = true;
   console.log('✅ VC Role Bot is online!');
   console.log(`🤖 Logged in as ${client.user.tag}`);
@@ -73,51 +74,67 @@ client.on('messageCreate', async (message) => {
 
     // !requestvc
     if (message.content === '!requestvc') {
-      if (activeRequests.has(message.guild.id)) return message.reply('You already have an active VC request.');
+      if (activeRequests.has(message.guild.id)) return await message.reply('You already have an active VC request.');
       const timeout = setTimeout(() => {
         message.channel.send(`${message.author}, your VC request was denied (no staff response).`);
         activeRequests.delete(message.guild.id);
       }, 10 * 60 * 1000);
       activeRequests.set(message.guild.id, timeout);
-      return message.reply('VC request submitted.');
+      return await message.reply('VC request submitted.');
     }
 
     // !approvevc
     if (message.content === '!approvevc') {
       const isStaff = message.member.roles.cache.has('769628526701314108') || message.member.roles.cache.has('1437634924386451586');
-      if (!isStaff) return message.reply('You need Staff or Mod role.');
+      if (!isStaff) return await message.reply('You need Staff or Mod role.');
+      
+      // Cooldown check (3 seconds)
+      const lastTime = lastMessageTime.get(`approve-${message.guild.id}`) || 0;
+      if (Date.now() - lastTime < 3000) return await message.reply('Approval message sent recently. Please wait.');
+      
       if (activeRequests.has(message.guild.id)) {
         clearTimeout(activeRequests.get(message.guild.id));
         activeRequests.delete(message.guild.id);
       }
       vcApproved.set(message.guild.id, true);
-      return message.channel.send('VC session approved — users can now use !joinvc.');
+      lastMessageTime.set(`approve-${message.guild.id}`, Date.now());
+      return await message.channel.send('VC session approved — users can now use !joinvc.');
     }
 
     // !joinvc
     if (message.content === '!joinvc') {
       const approved = vcApproved.get(message.guild.id);
       const isStaff = message.member.roles.cache.has('769628526701314108') || message.member.roles.cache.has('1437634924386451586');
-      if (!approved && !isStaff) return message.reply('VC not approved yet.');
+      if (!approved && !isStaff) return await message.reply('VC not approved yet.');
       const role = message.guild.roles.cache.get('1471376746027941960');
-      if (!role) return message.reply('VC role not found.');
-      if (message.member.roles.cache.has(role.id)) return message.reply('You already have access.');
+      if (!role) return await message.reply('VC role not found.');
+      if (message.member.roles.cache.has(role.id)) return await message.reply('You already have access.');
       await message.member.roles.add(role);
-      return message.reply('VC access granted.');
+      return await message.reply('VC access granted.');
     }
 
     // !lockvc
     if (message.content === '!lockvc') {
       const isStaff = message.member.roles.cache.has('769628526701314108') || message.member.roles.cache.has('1437634924386451586');
-      if (!isStaff) return message.reply('You need Staff or Mod role.');
+      if (!isStaff) return await message.reply('You need Staff or Mod role.');
+      
+      // Cooldown check (3 seconds)
+      const lastTime = lastMessageTime.get(`lock-${message.guild.id}`) || 0;
+      if (Date.now() - lastTime < 3000) return await message.reply('Lock message sent recently. Please wait.');
+      
       vcApproved.set(message.guild.id, false);
-
       const role = message.guild.roles.cache.get('1471376746027941960');
       const vcChannel = message.guild.channels.cache.get('769855238562643968');
-      if (!role) return message.reply('VC role not found.');
-
-      const members = message.guild.members.cache.filter(member => member.roles.cache.has(role.id));
-      for (const member of members.values()) {
+      if (!role) return await message.reply('VC role not found.');
+      
+      // Filter and process: Skip staff, mods, and the bot itself
+      const membersToProcess = message.guild.members.cache.filter(member => {
+        const isStaffOrMod = member.roles.cache.has('769628526701314108') || member.roles.cache.has('1437634924386451586');
+        const isBot = member.id === '1470584024882872430'; // Your bot's ID
+        return member.roles.cache.has(role.id) && !isStaffOrMod && !isBot;
+      });
+      
+      for (const member of membersToProcess.values()) {
         try {
           await member.roles.remove(role);
           if (vcChannel && member.voice.channelId === vcChannel.id) await member.voice.disconnect();
@@ -125,7 +142,8 @@ client.on('messageCreate', async (message) => {
           console.error(`Failed to update ${member.user.tag}`, err);
         }
       }
-      return message.channel.send('VC session locked.');
+      lastMessageTime.set(`lock-${message.guild.id}`, Date.now());
+      return await message.channel.send('VC session locked.');
     }
 
   } catch (error) {
