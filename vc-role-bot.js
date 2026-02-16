@@ -8,7 +8,7 @@ const port = process.env.PORT || 10000;
 
 // Check for BOT_TOKEN
 if (!process.env.BOT_TOKEN) {
-  console.error("❌ BOT_TOKEN is missing! Add it in Render Environment Variables.");
+  console.error("❌ BOT_TOKEN is missing! Add it in Render Environment Variables or .env file.");
   process.exit(1);
 }
 
@@ -74,23 +74,35 @@ app.get('/', (req, res) => {
 
 // Discord commands
 client.on('messageCreate', async (message) => {
+  // Enhanced debugging logs
+  console.log(`[DEBUG] Raw message: "${message.content}" | Author: ${message.author.tag} | Channel: ${message.channel.name} (${message.channel.id}) | Guild: ${message.guild?.name} (${message.guild?.id})`);
+
   try {
-    if (!message.guild || message.author.bot) return;
-    if (processedMessages.has(message.id)) return;
+    if (!message.guild || message.author.bot) {
+      console.log('[DEBUG] Ignored: Not in guild or from bot');
+      return;
+    }
+    if (processedMessages.has(message.id)) {
+      console.log('[DEBUG] Ignored: Message already processed');
+      return;
+    }
     processedMessages.add(message.id);
 
-    // Removed channel restrictions - commands now work in any channel in the guild
-    // const allowedChannels = ['769855036876128257', '1471682252537860213'];
-    // if (!allowedChannels.includes(message.channel.id)) return;
-
+    // No channel restrictions - works in any channel
     const member = message.member;
+    if (!member) {
+      console.log('[DEBUG] Error: Member not found');
+      return;
+    }
 
     // Helper: check if user is staff
     const isStaff = member.roles.cache.has('769628526701314108') ||
                     member.roles.cache.has('1437634924386451586');
+    console.log(`[DEBUG] isStaff: ${isStaff} | Roles: ${member.roles.cache.map(r => r.name).join(', ')}`);
 
     // !requestvc
-    if (message.content == '!requestvc') {
+    if (message.content === '!requestvc') {
+      console.log('[DEBUG] Processing !requestvc');
       if (activeRequests.has(message.guild.id)) {
         return message.reply('You already have an active VC request.');
       }
@@ -107,7 +119,8 @@ client.on('messageCreate', async (message) => {
     }
 
     // !approvevc
-    if (message.content == '!approvevc') {
+    if (message.content === '!approvevc') {
+      console.log('[DEBUG] Processing !approvevc');
       if (!isStaff) return message.reply('You need Staff or Mod role.');
 
       if (activeRequests.has(message.guild.id)) {
@@ -120,7 +133,8 @@ client.on('messageCreate', async (message) => {
     }
 
     // !joinvc
-    if (message.content == '!joinvc') {
+    if (message.content === '!joinvc') {
+      console.log('[DEBUG] Processing !joinvc');
       const approved = vcApproved.get(message.guild.id) || false;
       if (!approved && !isStaff) return message.reply('VC not approved yet.');
 
@@ -133,7 +147,8 @@ client.on('messageCreate', async (message) => {
     }
 
     // !lockvc
-    if (message.content == '!lockvc') {
+    if (message.content === '!lockvc') {
+      console.log('[DEBUG] Processing !lockvc');
       if (!isStaff) return message.reply('You need Staff or Mod role.');
 
       vcApproved.set(message.guild.id, false);
@@ -144,7 +159,7 @@ client.on('messageCreate', async (message) => {
 
       const membersToProcess = message.guild.members.cache.filter(m => {
         const mIsStaff = m.roles.cache.has('769628526701314108') || m.roles.cache.has('1437634924386451586');
-        return m.roles.cache.has(role.id) && !mIsStaff && m.id != client.user.id;
+        return m.roles.cache.has(role.id) && !mIsStaff && m.id !== client.user.id;
       });
 
       for (const m of membersToProcess.values()) {
@@ -157,6 +172,12 @@ client.on('messageCreate', async (message) => {
       }
 
       return message.reply('🔒 VC session locked.');
+    }
+
+    // Test command to verify bot is responding
+    if (message.content === '!test') {
+      console.log('[DEBUG] Processing !test');
+      return message.reply('Bot is working! Commands: !requestvc, !approvevc, !joinvc, !lockvc');
     }
 
   } catch (err) {
