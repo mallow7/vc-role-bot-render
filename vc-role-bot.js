@@ -39,6 +39,11 @@ client.once('ready', () => {
   console.log(`📊 In ${client.guilds.cache.size} servers`);
 });
 
+// Track disconnects/reconnects to keep status accurate
+client.on('shardDisconnect', () => botOnline = false);
+client.on('shardReconnecting', () => botOnline = false);
+client.on('shardReady', () => botOnline = true);
+
 // Discord error handlers
 client.on('error', console.error);
 process.on('unhandledRejection', console.error);
