@@ -65,12 +65,16 @@ app.get('/', (req, res) => {
 // Discord message handling
 client.on('messageCreate', async (message) => {
   try {
+    console.log(`Processing message: ${message.content} in ${message.channel.id} from ${message.author.tag}`);  // Debug log: Shows every message received
     if (!message.guild || message.author.bot) return;
     if (processedMessages.has(message.id)) return;
     processedMessages.add(message.id);
 
     const allowedChannels = ['769855036876128257', '1471682252537860213'];
-    if (!allowedChannels.includes(message.channel.id)) return;
+    if (!allowedChannels.includes(message.channel.id)) {
+      console.log('Message not in allowed channel');  // Debug log: If channel is wrong
+      return;
+    }
 
     // !requestvc
     if (message.content === '!requestvc') {
