@@ -26,7 +26,6 @@ const client = new Client({
 const activeRequests = new Map();
 const vcApproved = new Map();
 const processedMessages = new Set();
-const lastMessageTime = new Map();
 let botOnline = false;
 
 // Clear processed messages every hour
@@ -165,4 +164,3 @@ client.login(process.env.BOT_TOKEN)
     console.error("❌ Failed to login:", err);
     process.exit(1);
   });
-
