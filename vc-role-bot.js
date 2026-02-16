@@ -1,5 +1,4 @@
 // vc-role-bot.js
-require('dotenv').config(); // Load .env variables if using
 
 const { Client, GatewayIntentBits } = require('discord.js');
 const express = require('express');
