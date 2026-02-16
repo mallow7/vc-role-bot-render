@@ -89,24 +89,24 @@ client.on('messageCreate', async (message) => {
                     member.roles.cache.has('1437634924386451586');
 
     // !requestvc
-    if (message.content === '!requestvc') {
+    if (message.content == '!requestvc') {
       if (activeRequests.has(message.guild.id)) {
         return message.reply('You already have an active VC request.');
       }
 
       activeRequests.set(message.guild.id, setTimeout(() => {
-        message.channel.send(`${message.author}, your VC request was denied (no staff response).`);
+        message.reply(`${message.author}, your VC request was denied (no staff response).`);
         activeRequests.delete(message.guild.id);
       }, 10 * 60 * 1000));
 
-      return message.channel.send(
+      return message.reply(
         `${message.author} has requested a moderated voice channel session.\n` +
         `Please ping @Staff and @Moderator to respond with !approvevc.`
       );
     }
 
     // !approvevc
-    if (message.content === '!approvevc') {
+    if (message.content == '!approvevc') {
       if (!isStaff) return message.reply('You need Staff or Mod role.');
 
       if (activeRequests.has(message.guild.id)) {
@@ -115,11 +115,11 @@ client.on('messageCreate', async (message) => {
       }
 
       vcApproved.set(message.guild.id, true);
-      return message.channel.send('✅ VC session approved — users can now use !joinvc.');
+      return message.reply('✅ VC session approved — users can now use !joinvc.');
     }
 
     // !joinvc
-    if (message.content === '!joinvc') {
+    if (message.content == '!joinvc') {
       const approved = vcApproved.get(message.guild.id) || false;
       if (!approved && !isStaff) return message.reply('VC not approved yet.');
 
@@ -132,7 +132,7 @@ client.on('messageCreate', async (message) => {
     }
 
     // !lockvc
-    if (message.content === '!lockvc') {
+    if (message.content == '!lockvc') {
       if (!isStaff) return message.reply('You need Staff or Mod role.');
 
       vcApproved.set(message.guild.id, false);
@@ -143,7 +143,7 @@ client.on('messageCreate', async (message) => {
 
       const membersToProcess = message.guild.members.cache.filter(m => {
         const mIsStaff = m.roles.cache.has('769628526701314108') || m.roles.cache.has('1437634924386451586');
-        return m.roles.cache.has(role.id) && !mIsStaff && m.id !== client.user.id;
+        return m.roles.cache.has(role.id) && !mIsStaff && m.id != client.user.id;
       });
 
       for (const m of membersToProcess.values()) {
@@ -155,7 +155,7 @@ client.on('messageCreate', async (message) => {
         }
       }
 
-      return message.channel.send('🔒 VC session locked.');
+      return message.reply('🔒 VC session locked.');
     }
 
   } catch (err) {
