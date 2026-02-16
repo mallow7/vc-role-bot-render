@@ -173,4 +173,3 @@ client.login(process.env.BOT_TOKEN)
     console.error("❌ Failed to login:", err);
     process.exit(1);
   });
-v
